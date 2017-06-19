@@ -12,16 +12,15 @@ from scrapy import signals
 CHANGE_PROXY_STATUS_LIST = [502, 404]
 
 class ProxyMiddleware(object):
-    r = get_redis()
     #rand_index = random.randint(0,r.llen("Proxy:host")-1)
-    #proxy_host =  r.lindex("Proxy:host",rand_index)
+    r = get_redis()
     proxy_host =  r.rpoplpush("Proxy:host","Proxy:host")
 
     def process_request(self, request, spider):
         # Set the location of the proxy
             request.meta['proxy'] = self.proxy_host
             retry_times = request.meta.get('retry_times', 0)
-            print "Current proxy: " + self.proxy_host + " Retry times: %d" % retry_times
+            print "Current proxy: " + request.meta['proxy'] + " Retry times: %d" % retry_times
 
             # Use the following lines if your proxy requires authentication
             proxy_user_pass = "iMissWonder-SP3: "
@@ -31,25 +30,31 @@ class ProxyMiddleware(object):
             request.headers['Proxy-Authorization'] = 'Basic ' + encoded_user_pass
 
     def process_exception(self, request, exception, spider):
-        proxy = request.meta['proxy']
-        print ('Remove proxy: %s, %d proxies left' % (
-            proxy, self.r.llen("Proxy:host")-1))
+        r = get_redis()
+        current_proxy = request.meta['proxy']
         try:
-            self.r.lrem("Proxy:host", 0, self.proxy_host)
-            print "Successfully removed"
-            rand_index = random.randint(0,self.r.llen("Proxy:host")-1)
-            self.proxy_host =  self.r.lindex("Proxy:host",rand_index)
+            self.del_proxy(current_proxy)
         except ValueError:
             pass
+        #return request
+
+    def del_proxy(self, current_proxy):
+        r = get_redis()
+        print ('Remove proxy: %s, %d proxies left' % (
+            current_proxy, r.llen("Proxy:host")-1))
+        r.lrem("Proxy:host", 0, current_proxy)
+        print "Successfully removed :" + current_proxy
 
     '''
-    def change_proxy(request):
-        proxy = request.meta['proxy']
+    def change_proxy(self, request):
+        r = get_redis()
+        proxy_host =  r.rpoplpush("Proxy:host","Proxy:host")
+        request.meta['proxy'] = proxy_host
+        return proxy_host
         # Change proxy here
         # Then check number of retries on the request
         # and decide if you want to give it another chance.
         # If not - return None else
-        return request
     def process_exception(self, request, exception, spider):
         return_request = self.change_proxy(request)
         if return_request:

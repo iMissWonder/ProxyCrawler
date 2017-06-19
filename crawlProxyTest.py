@@ -1,3 +1,10 @@
-from scrapy import cmdline
+# -*- coding: utf-8 -*-
 
-cmdline.execute("scrapy crawl ProxyTestSpider".split())
+#from scrapy import cmdline
+#cmdline.execute("scrapy crawl ProxyTestSpider".split())
+
+from scrapy.crawler import CrawlerRunner
+runner = CrawlerRunner()
+
+runner.create_crawler("ProxyTestSpider")
+runner.create_crawler("ProxyTestSpider")

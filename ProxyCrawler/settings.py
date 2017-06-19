@@ -9,6 +9,10 @@
 #     http://scrapy.readthedocs.org/en/latest/topics/downloader-middleware.html
 #     http://scrapy.readthedocs.org/en/latest/topics/spider-middleware.html
 
+from scrapy_redis import get_redis
+r = get_redis()
+PROXY_LENGTH = r.llen("Proxy::host")
+
 BOT_NAME = 'ProxyCrawler'
 
 SPIDER_MODULES = ['ProxyCrawler.spiders']
@@ -57,7 +61,7 @@ DOWNLOADER_MIDDLEWARES = {
     'scrapy.contrib.downloadermiddleware.retry.RetryMiddleware': 300,
     'scrapy.contrib.downloadermiddleware.httpproxy.HttpProxyMiddleware': 400,
 }
-RETRY_TIMES = 5
+RETRY_TIMES = 3
 
 # Enable or disable extensions
 # See http://scrapy.readthedocs.org/en/latest/topics/extensions.html
